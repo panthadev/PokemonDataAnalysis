@@ -515,27 +515,6 @@ Generations = c("Gen 1", "Gen 2", "Gen 3", "Gen 4", "Gen 5", "Gen 6")
 
 # vector for the the first trace
 Bug = compareTypeAcrossGen("Bug")
-# the other traces
-
-
-
-# Dragon = compareTypeAcrossGen("Dragon")
-# Electric = compareTypeAcrossGen("Electric")
-# Fairy = compareTypeAcrossGen("Fairy")
-# Fighting = compareTypeAcrossGen("Fighting")
-# Fire = compareTypeAcrossGen("Fire")
-# Ghost = compareTypeAcrossGen("Ghost")
-# Grass = compareTypeAcrossGen("Grass")
-# Ground = compareTypeAcrossGen("Ground")
-# Ice = compareTypeAcrossGen("Ice")
-# Normal = compareTypeAcrossGen("Normal")
-# Poison = compareTypeAcrossGen("Poison")
-# Psychic = compareTypeAcrossGen("Psychic")
-# Rock = compareTypeAcrossGen("Rock")
-# Water = compareTypeAcrossGen("Water")
-# Dark = compareTypeAcrossGen("Dark")
-# Flying = compareTypeAcrossGen("Flying")
-# Steel = compareTypeAcrossGen("Steel")
 
 data = data.frame(Generations, Bug)
 
@@ -543,24 +522,6 @@ data = data.frame(Generations, Bug)
 # making the graph and adding every trace, i should be doing this dynamically but it wasnt working soooo
 q2FinalGraph = plot_ly(data, x = ~Generations, y = ~Bug, type = "bar", name = "BUG")
 
-
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Dragon, name = "Dragon", marker = list(color = "pink"))
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Electric, name = "Electric")
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Fairy, name = "Fairy")
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Fighting, name = "Fighting")
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Fire, name = "Fire")
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Ghost, name = "Ghost")
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Grass, name = "Grass")
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Ground, name = "Ground")
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Ice, name = "Ice")
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Normal, name = "Normal")
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Poison, name = "Poison")
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Psychic, name = "Psychic")
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Rock, name = "Rock")
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Water, name = "Water")
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Dark, name = "Dark")
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Flying, name = "Flying")
-# q2FinalGraph = q2FinalGraph %>% add_trace(y = Steel, name = "Steel")
 
 
 
@@ -638,22 +599,58 @@ q2FinalGraph
 
 
 
-### Lets do some descriptive stats --> then well do hypothesis testing
+## Lets do some Querying
 ```{r}
 
+library(DBI)
+library(RSQLite)
+drv = dbDriver("SQLite")
 
-
+pokemonDatabase = dbConnect(drv, dbname = "./data/veekun-pokedex.sqlite")
+dbExecute(pokemonDatabase, "PRAGMA foreign_keys = on")
 
 ```
 
 
 ```{r}
-head(Pokemon)
+dbListTables(pokemonDatabase)
+
+```
+This database and tables needs to be "cleaned" or organized into the information that I actually need --> practice organizing and putting data togehter with joins
+```{r}
+
+dbListFields(pokemonDatabase, "pokemon_stats")
+
+dbGetQuery(pokemonDatabase, "
+           SELECT *
+           FROM  pokemon_stats
+           LIMIT 100")
+
+dbGetQuery(pokemonDatabase, 
+           "PRAGMA FOREIGN_KEY_LIST(pokemon_stats)")
 ```
 
 
+```{r}
 
 
+dbListFields(pokemonDatabase, "pokemon_species_names")
+
+dbGetQuery(pokemonDatabase, "
+           SELECT *
+           FROM  pokemon_species_names
+           LIMIT 100")
+
+dbGetQuery(pokemonDatabase, 
+           "PRAGMA FOREIGN_KEY_LIST(pokemon_species_names)")
+```
+
+
+```{r}
+
+dbDisconnect(pokemonDatabase)
+
+```
 
 
 
