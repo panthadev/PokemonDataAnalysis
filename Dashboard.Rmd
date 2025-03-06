@@ -1,0 +1,673 @@
+---
+title: "Dashboard"
+output: html_document
+date: "2025-01-25"
+---
+
+
+## Welcome to the World of Pokemon
+```{r}
+library(datasets)
+```
+
+First lets bring in the Pokemon dataset.
+
+```{r}
+
+Pokemon = read.csv(file = 'data/Pokemon.csv')
+head(Pokemon)
+```
+
+<br>
+<br>
+
+### Reasearch Question 1:
+
+**What is the most common type for pokemon?**
+
+Since there are secondary typing for Pokemon, we will have to combine the observations from the two variables.
+
+<br>
+
+But first lets see what the data shows for Pokemon that only have one type.
+
+```{r}
+# this is the Type.2 for charmander
+# a Pokemon that has a singular "Fire" type
+
+Pokemon$Type.2[5]
+```
+The data displays a "" or empty for a Pokemon that has to Type.2. This will muddy our data if we're looking for the most common type, since technically "" is a valid observation as far as the code is concerned.
+
+<br>
+
+These are the tables for Type.1 and Type.2 variables.
+
+```{r}
+table(Pokemon$Type.1)
+table(Pokemon$Type.2)
+
+# how many types are in Type.1
+length(table(Pokemon$Type.1)) 
+
+# how many types are in Type.2
+length(table(Pokemon$Type.2))
+
+```
+As you can see there is an extra type in `table(Pokemon$Type.2)` that is "" with the number 386 to represent all of the observations/Pokemon with "" for Type.2.
+
+<br>
+This is the combined table of Type.1 and Type.2, minus the empty "" type Now we need to be careful, because this does not represent every Pokemon. As you can see when we look at the sum of the table, it shows 1214 when we only have 800 observations/Pokemon.
+```{r}
+combinedTypeTable = (table(Pokemon$Type.1) + table(Pokemon$Type.2)[-1])
+
+
+paste("The sum is: ", sum(combinedTypeTable))
+```
+
+
+Finally lets see which type is the most common for pokemon, either as their Type.1 OR their Type.2.
+```{r}
+# finds the max(table), and then finds the index of the max value, then returns both the number and its name, in our case the type
+
+combinedTypeTable[which(combinedTypeTable == max(combinedTypeTable))]
+```
+
+**As you can see, the most common typing for a Pokemon is Water.**
+
+But as always a visualization will help in contextualizing this piece of information. 
+
+```{r}
+combinedTypeTable = sort(combinedTypeTable, decreasing=TRUE)
+barplot(combinedTypeTable[1:5], main = "TOP 5 MOST COMMON TYPES IN POKEMON", ylab="Frequency", col="lightblue")
+
+```
+
+
+<br>
+<br>
+
+
+
+
+
+
+
+
+
+### Reasearch Question 2:
+
+**What generation has the greatest number of each "type"(Type.1 and Type.2 combined) of Pokemon**
+
+<br>
+
+First we need to know how many different generations are present in our data.
+```{r}
+table(Pokemon$Generation)
+```
+There are 6 different generations of Pokemon listed in the data, with a varying number of Pokemon for each generation.
+
+
+Now we need to parse the data so that we can see how many of each type is in each generation.
+
+```{r}
+# table for the number of each Type.1 type for all entries where the Generation is 1
+table(Pokemon$Type.1[which(Pokemon$Generation == 1)])
+
+# table for the number of each Type.2 type for all entries where the Generation is 1
+table(Pokemon$Type.2[which(Pokemon$Generation == 1)])
+
+length(table(Pokemon$Type.1[which(Pokemon$Generation == 1)]))
+length(table(Pokemon$Type.2[which(Pokemon$Generation == 1)]))
+
+
+```
+
+But we run in to a problem due to the way that Pokemon types are set up. A Pokemon has one or two types, and the Type.2 is valued the same as Type.1. This means that we need to count both when looking at how many types of each Pokemon are in each generation. For example the first Pokemon in the data, Bulbasaur, would count as both a "Grass" and "Poison" type, with both holding equal weight. This causes discrepancies like we see above, where some types are missing from the Type.2 table and the Type.1 table . We will have to modify the table ourselves to make this work.
+
+<br>
+
+Since we will most likely have to do this for every generation, lets make a function that fills in the missing "types" and returns one vector with the combined values for both Type.1 and Type.2
+
+```{r}
+# this function will help us combine the two Type tables int o one table with all unique types from both Type.1 and Type.2, as well as add up duplicates
+
+
+combineTypeTblByGen = function(generation){
+  
+  # merging the table of Type.1 and Type.2 for the generation
+  mergedTypeTable = merge(table(Pokemon$Type.1[which(Pokemon$Generation == generation)]), table(Pokemon$Type.2[which(Pokemon$Generation == generation)])[-1], all= TRUE)
+  
+  
+  # vector version of the merged tables above
+  typeVec = mergedTypeTable[[2]]
+  names(typeVec) = mergedTypeTable[[1]]
+  
+  
+  
+  # for loop that adds up the repeat values for the types, and then removes the duplicate name+value from the vector
+  len = length(typeVec) - 1
+  for(i in 1:len){
+  
+    if(i >= length(typeVec)){break}
+  
+    else if(names(typeVec[i]) == names(typeVec[i + 1])){
+
+      typeVec[i+1] = typeVec[i] + typeVec[i+1]
+      #print(typeVec[i])
+
+      typeVec = typeVec[-c(i)]
+  
+    }
+
+  }
+  
+  return(typeVec)
+  
+  
+}
+
+
+barplot(combineTypeTblByGen(1), las=2, main="Frequency of Types for Generation 1")
+
+
+```
+
+The plot above combines frequency of "types" in both Type1 and Type2 for generation 1, and because we have the function combineTypeTblByGen() we are able to replicate this for every other generation as well.
+
+
+```{r, echo= F ,eval = FALSE}
+#The code chunk below is the learning process / trying to figure out how to combine two tables of dinnerent dimensions together before I found the merge function
+
+
+
+
+
+# figuring out how to add a vector with one value and name to a table
+vec1 = 2
+names(vec1) = c("Fire")
+vec1
+
+table(Pokemon$Type.1[which(Pokemon$Generation == 1)])
+
+newtab = c(table(Pokemon$Type.2[which(Pokemon$Generation == 1)])[-1] , vec1)
+newtab
+
+
+# creating a vector with just the names of the types from the Type.1 and Type.2 tables
+namesType1Vec = names(table(Pokemon$Type.1[which(Pokemon$Generation == 1)]))
+namesType2Vec = names(table(Pokemon$Type.2[which(Pokemon$Generation == 1)])[-1])
+
+is.vector(namesType2Vec)
+
+
+# for loop that goes through each name in the namesType1Vec and checks if its == to any names in the namesType2Vec, and if so removes them from both vectors.
+
+# this leaves us with only the types that are missing from both tables
+# this solution has a time complexity of n^2, fix it later
+
+for(type1 in namesType1Vec){
+  
+  for(type2 in namesType2Vec){
+    if(type1 == type2){
+      namesType1Vec = namesType1Vec[! namesType1Vec %in% type1]
+      namesType2Vec = namesType2Vec[! namesType2Vec %in% type1]
+      
+    }
+  }
+  
+}
+
+namesType1Vec
+namesType2Vec
+
+
+
+# finding how to remove values from a vector -> hopefully can translate to table
+vec2 = c("a", "b", "c")
+vec2[! vec2 %in% c("a")]
+
+
+
+
+# for Type.1 table
+# creates a vector with the types missing from Type.1 with the types as names and values of 0 for all of them
+MissingFromType1 = rep(0, times= length(namesType2Vec))
+names(MissingFromType1) = c(namesType2Vec)
+
+MissingFromType1
+
+
+# for Type.2 table
+# creates a vector with the types missing from Type.2 with the types as names and values of 0 for all of them
+MissingFromType2 = rep(0, times= length(namesType1Vec))
+names(MissingFromType2) = c(namesType1Vec)
+
+MissingFromType2
+
+
+
+
+Type1WithMissing = c(table(Pokemon$Type.1[which(Pokemon$Generation == 1)]), MissingFromType1)
+
+Type1WithMissing
+
+
+
+Type2WithMissing = c(table(Pokemon$Type.2[which(Pokemon$Generation == 1)])[-1], MissingFromType2)
+
+Type2WithMissing
+
+
+class(table(Pokemon$Type.1[which(Pokemon$Generation == 1)]))
+
+
+class(as.table(Type1WithMissing))
+
+
+
+
+sort(as.table(Type1WithMissing)) 
+sort(as.table(Type2WithMissing))
+
+```
+
+
+
+```{r, echo = F, eval = F}
+# merging the table of Type.1 and Type.2 for Generation 1
+
+mergedTypeTableGen1 = merge(table(Pokemon$Type.1[which(Pokemon$Generation == 1)]), table(Pokemon$Type.2[which(Pokemon$Generation == 1)])[-1], all= TRUE)
+
+mergedTypeTableGen1
+
+
+# vector version of the merged tables above
+
+typeVec = mergedTypeTableGen1[[2]]
+names(typeVec) = mergedTypeTableGen1[[1]]
+
+typeVec
+# for loop that adds up the repeat values for the types, and then removes the duplicate name+value from the vector
+# 
+# len = length(typeVec) - 1
+# for(i in 1:len){
+#   
+#   if(i >= length(typeVec)){break}
+#   
+#   else if(names(typeVec[i]) == names(typeVec[i + 1])){
+# 
+#     typeVec[i+1] = typeVec[i] + typeVec[i+1]
+#     print(typeVec[i])
+# 
+#     typeVec = typeVec[-c(i)]
+# 
+#   }
+# 
+# }
+# 
+# 
+# 
+# typeVec
+# 
+# length(typeVec)
+
+```
+
+
+<br>
+
+Since we have the combined tables for every generation, we can move on to comparing the generations by Type. 
+
+This next function will allow us to see how many of one specific type is in every generation. For example it will allow us to see the number of "Bug" types there are in generation 1 through 6.
+
+```{r}
+
+# function takes in a character argument that represents a Pokemon Type and returns a vector of length 6, with each index representing the number of that type of pokemon are in that generation number
+
+compareTypeAcrossGen = function(type){
+  
+  oneTypeAllGensVec = c()
+  
+  for(i in 1:6){
+    
+    #print(combineTypeTblByGen(i)[type])
+    
+    oneTypeAllGensVec[i] = combineTypeTblByGen(i)[type]
+   
+    
+  }
+
+  names(oneTypeAllGensVec) = c("Gen 1", "Gen 2", "Gen 3", "Gen 4", "Gen 5", "Gen 6")
+  
+  return(oneTypeAllGensVec)
+
+}
+
+
+compareTypeAcrossGen("Bug")
+
+compareTypeAcrossGen("Dark")
+```
+
+```{r}
+
+barplot(compareTypeAcrossGen("Bug"), main="Frequency of Bug Types in Each Generation(Gen)", las=2, col = "lightgreen")
+```
+
+We have the comparisons across generations for individual types, but that doesn't accomplish anything unless we want to create 18 different barplots. Instead lets use the plotly package to create an interactive barplot that shows the frequency of each type across the generations to get a broader understanding of the dataset.
+```{r, echo = F, eval = F}
+# Goal: Make a bar graph where I can toggle what Type is shown, and show the frequency of that Type for each generation.
+# 
+# What I need:
+#   
+#   - feed a dataframe into the plot_ly function, as well as other necessary arguments(which are labels, the type of plot, ect)
+# 
+#   - feed the graph into the add_trace function which allows you to add the different observations, for our case that would mean that originally the graph would only have "Bug" type, and then the add_trace() allows us to add "Dark" and "Dragon" types
+# 
+#   - feed the graph into the layout() function, which allows us to configure the layout of the graph. This is where the magic happens. Most important here is the (barmode) and (updatemenus) arguments. In the updatemenus, we need to choose thetype of menu we want. For this time it will be buttons
+#
+# Finally we can also turn off the displayModeBar at the top using the config() function
+
+```
+
+```{r, include = FALSE}
+library(ggplot2)
+library(plotly)
+numPokemonTypes = 18
+
+
+
+# setup for making traces, makes a list where the first element is a vector of the number of bug types in each generation and so on for every type 
+
+types = names(combineTypeTblByGen(1))
+
+typeByGenTraces = list()
+for(i in 1:18){
+  typeByGenTraces[[i]] = c(compareTypeAcrossGen(types[i]))
+}
+typeByGenTraces
+
+# vector of colors to customize colors of the bars
+
+colorsByPokemonType = c("lightgreen", "darkblue", "yellow", "pink", "brown", "orangered", "slateblue", "darkgreen", "khaki", "cyan", "lightgray", "purple", "hotpink", "tan", "deepskyblue","sienna", "skyblue", "lightsteelblue" )
+
+
+
+
+# creates the dataframe for the plot_ly() function
+
+Generations = c("Gen 1", "Gen 2", "Gen 3", "Gen 4", "Gen 5", "Gen 6")
+Bug = compareTypeAcrossGen("Bug")
+data = data.frame(Generations, Bug)
+
+
+# setting up the initial plot
+
+q2FinalGraph = plot_ly(data, x = ~Generations, y = ~Bug, type = "bar", name = "Bug", marker = list(color = "lightgreen"))
+
+
+
+# adding traces
+
+for(i in 2:18){
+  
+  q2FinalGraph = q2FinalGraph %>% add_trace(y = typeByGenTraces[[i]], name = types[i], marker = list(color = colorsByPokemonType[i]))
+  
+  print(colorsByPokemonType[i])
+}
+
+  
+# buttons and other configs  
+  
+q2FinalGraphButtons = list(
+  # EX:
+  # list(
+  #   methods = "update",
+  #   args = list(list(visible = c(TRUE, FALSE))),
+  #   label = "BUG"
+  #   
+  # )
+)
+
+for(i in 1:numPokemonTypes){
+  
+  #makes a vector of length numPokemonTypes where vector[i] is TRUE, and every other index is false
+  visibilityVector = c()
+  
+  if(i != 1){ visibilityVector[1:i-1] = FALSE }
+  visibilityVector[i] = TRUE
+  if(i != numPokemonTypes){ visibilityVector[i+1:18] = FALSE }
+  
+  
+  #creates each individual button, with unique args and label
+  q2FinalGraphButtons[[i]] = list(
+    
+    methods = "update",
+    args = list(list(visible = visibilityVector)),
+    label = names(combineTypeTblByGen(1)[i])
+  )
+
+}
+
+# adds a button that toggles the graph to show every type again
+
+q2FinalGraphButtons[[numPokemonTypes + 1]] = list(
+  methods = "update",
+  args = list(list(visible = rep(c(TRUE), times = 18))),
+  label = "All"
+)
+
+
+# changes the layout of the graph and adds buttons to toggle between TYPES
+q2FinalGraph = q2FinalGraph %>% layout(
+  title = "Pokemon Type By Generation", 
+  yaxis = list(title = "Count")
+  ,barmode = "group",
+  
+  updatemenus = list(
+    
+    list(
+      # buttons as the type of menu we want, as well as styling for buttons
+      type = "buttons",
+      direction = "down",
+      x = 1.5, y = 1,
+      showactive = FALSE,
+      
+      # object to be used for the buttons
+      buttons = q2FinalGraphButtons[1:12]
+    ),
+    list(
+      # buttons as the type of menu we want, as well as styling for buttons
+      type = "buttons",
+      direction = "down",
+      x = 1.7, y = 1,
+      showactive = FALSE,
+      
+      # object to be used for the buttons
+      buttons = q2FinalGraphButtons[13:(numPokemonTypes + 1)]
+    )
+  )
+)
+
+
+# hides the tool bar that shows up on plot_ly interactive graphs
+q2FinalGraph = q2FinalGraph %>% config(displayModeBar = FALSE)
+
+q2FinalGraph
+
+```
+
+```{r}
+q2FinalGraph
+
+```
+
+```{r, echo = F, eval = F}
+
+# before i figured out how to iteratively add traces to plotly graphs
+library(ggplot2)
+library(plotly)
+numPokemonTypes = 18
+
+# creates the dataframe for the plot_ly() function
+Generations = c("Gen 1", "Gen 2", "Gen 3", "Gen 4", "Gen 5", "Gen 6")
+
+# vector for the the first trace
+Bug = compareTypeAcrossGen("Bug")
+# the other traces
+
+
+
+# Dragon = compareTypeAcrossGen("Dragon")
+# Electric = compareTypeAcrossGen("Electric")
+# Fairy = compareTypeAcrossGen("Fairy")
+# Fighting = compareTypeAcrossGen("Fighting")
+# Fire = compareTypeAcrossGen("Fire")
+# Ghost = compareTypeAcrossGen("Ghost")
+# Grass = compareTypeAcrossGen("Grass")
+# Ground = compareTypeAcrossGen("Ground")
+# Ice = compareTypeAcrossGen("Ice")
+# Normal = compareTypeAcrossGen("Normal")
+# Poison = compareTypeAcrossGen("Poison")
+# Psychic = compareTypeAcrossGen("Psychic")
+# Rock = compareTypeAcrossGen("Rock")
+# Water = compareTypeAcrossGen("Water")
+# Dark = compareTypeAcrossGen("Dark")
+# Flying = compareTypeAcrossGen("Flying")
+# Steel = compareTypeAcrossGen("Steel")
+
+data = data.frame(Generations, Bug)
+
+
+# making the graph and adding every trace, i should be doing this dynamically but it wasnt working soooo
+q2FinalGraph = plot_ly(data, x = ~Generations, y = ~Bug, type = "bar", name = "BUG")
+
+
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Dragon, name = "Dragon", marker = list(color = "pink"))
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Electric, name = "Electric")
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Fairy, name = "Fairy")
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Fighting, name = "Fighting")
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Fire, name = "Fire")
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Ghost, name = "Ghost")
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Grass, name = "Grass")
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Ground, name = "Ground")
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Ice, name = "Ice")
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Normal, name = "Normal")
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Poison, name = "Poison")
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Psychic, name = "Psychic")
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Rock, name = "Rock")
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Water, name = "Water")
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Dark, name = "Dark")
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Flying, name = "Flying")
+# q2FinalGraph = q2FinalGraph %>% add_trace(y = Steel, name = "Steel")
+
+
+
+# creates the buttons for the graph. each list inside the main list represents one button and its attributes
+
+q2FinalGraphButtons = list(
+  # EX:
+  # list(
+  #   methods = "update",
+  #   args = list(list(visible = c(TRUE, FALSE))),
+  #   label = "BUG"
+  #   
+  # )
+)
+
+for(i in 1:numPokemonTypes){
+  
+  #makes a vector of length numPokemonTypes where vector[i] is TRUE, and every other index is false
+  visibilityVector = c()
+  
+  if(i != 1){ visibilityVector[1:i-1] = FALSE }
+  visibilityVector[i] = TRUE
+  if(i != numPokemonTypes){ visibilityVector[i+1:18] = FALSE }
+  
+  
+  #creates each individual button, with unique args and label
+  q2FinalGraphButtons[[i]] = list(
+    
+    methods = "update",
+    args = list(list(visible = visibilityVector)),
+    label = names(combineTypeTblByGen(1)[i])
+  )
+
+}
+
+
+# changes the layout of the graph and adds buttons to toggle between TYPES
+q2FinalGraph = q2FinalGraph %>% layout(
+  title = "Num of Each Pokemon Type in Every Generation", 
+  yaxis = list(title = "Count")
+  ,barmode = "group",
+  
+  updatemenus = list(
+    
+    list(
+      # buttons as the type of menu we want, as well as styling for buttons
+      type = "buttons",
+      direction = "down",
+      x = 1.5, y = 1,
+      showactive = FALSE,
+      
+      # object to be used for the buttons
+      buttons = q2FinalGraphButtons[1:12]
+    ),
+    list(
+      # buttons as the type of menu we want, as well as styling for buttons
+      type = "buttons",
+      direction = "down",
+      x = 1.7, y = 1,
+      showactive = FALSE,
+      
+      # object to be used for the buttons
+      buttons = q2FinalGraphButtons[13:18]
+    )
+  )
+)
+
+
+# hides the tool bar that shows up on plot_ly interactive graphs
+q2FinalGraph = q2FinalGraph %>% config(displayModeBar = FALSE)
+
+q2FinalGraph
+```
+
+
+
+
+### Lets do some descriptive stats --> then well do hypothesis testing
+```{r}
+
+
+
+
+```
+
+
+```{r}
+head(Pokemon)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
