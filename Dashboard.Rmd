@@ -79,7 +79,7 @@ But as always a visualization will help in contextualizing this piece of informa
 
 ```{r}
 combinedTypeTable = sort(combinedTypeTable, decreasing=TRUE)
-barplot(combinedTypeTable[1:5], main = "TOP 5 MOST COMMON TYPES IN POKEMON", ylab="Frequency", col="lightblue")
+barplot(combinedTypeTable[1:5], main = "TOP 5 MOST COMMON TYPES IN POKEMON", ylab="Frequency", col=c("lightblue"))
 
 ```
 
@@ -95,7 +95,7 @@ barplot(combinedTypeTable[1:5], main = "TOP 5 MOST COMMON TYPES IN POKEMON", yla
 
 
 
-### Reasearch Question 2:
+### Reasearch Question 2: *ADD A "Total" Option to the Final Graph that Shows Total Amount of that Type
 
 **What generation has the greatest number of each "type"(Type.1 and Type.2 combined) of Pokemon**
 
@@ -499,6 +499,12 @@ q2FinalGraph
 ```
 
 ```{r}
+typeByGenTraces[]
+```
+
+
+
+```{r}
 q2FinalGraph
 
 ```
@@ -617,6 +623,29 @@ dbListTables(pokemonDatabase)
 
 ```
 This database and tables needs to be "cleaned" or organized into the information that I actually need --> practice organizing and putting data togehter with joins
+\
+Questions to ask/analyze:
+\
+how has the stats fro certain types changed over the course of the generartions?
+\
+is this change significant?
+\
+
+#### Goal 1: Create a table/df with all relevant info like pokemon speciest, pokedex number, stats, moves, pokedex flavor text, habitat, strengths and weaknesses, enocunters, locations, abilities
+
+#### Goal 2:
+Pokedex app? image, stats, and reads pokedex entry?
+check normality for stats by type
+hypothesis: flying types are significantly faster than ground, check?
+```{r}
+dbListFields(pokemonDatabase, "pokemon_species_flavor_text")
+
+dbGetQuery(pokemonDatabase, "
+           SELECT *
+           FROM pokemon_species_flavor_text
+           LIMIT 100")
+```
+
 ```{r}
 
 dbListFields(pokemonDatabase, "pokemon_stats")
@@ -624,7 +653,7 @@ dbListFields(pokemonDatabase, "pokemon_stats")
 dbGetQuery(pokemonDatabase, "
            SELECT *
            FROM  pokemon_stats
-           LIMIT 100")
+           LIMIT 20")
 
 dbGetQuery(pokemonDatabase, 
            "PRAGMA FOREIGN_KEY_LIST(pokemon_stats)")
@@ -639,11 +668,34 @@ dbListFields(pokemonDatabase, "pokemon_species_names")
 dbGetQuery(pokemonDatabase, "
            SELECT *
            FROM  pokemon_species_names
-           LIMIT 100")
+           LIMIT 20")
 
 dbGetQuery(pokemonDatabase, 
            "PRAGMA FOREIGN_KEY_LIST(pokemon_species_names)")
 ```
+
+### Research Question 3: How does each individual stat vary across the different types.
+When I think of flying type Pokemon, I imagine fast aerial predators, so naturally you would think that their speed stat is significantly higher than that of ground/rock types that are usually large boulders and giants. But do the stats, get it?, actually back this up? **Lets Find Out!**
+\
+
+**For Flying vs Ground: T test to compare samples of the speed stat taken from the flying and ground types.** 
+\
+Make this modular so it can be used for any combination of types and stats.
+\
+
+This can then be replicated for each stat for each type. For example you may want to see if the Fire type, chock full of aggressive Pokemon like Houndoom, have a significantly higher attack stat than a gentler pokemon type such as grass.
+\
+
+**Step 1**
+\
+Do some querying so we have a useful dataframe to work with.
+
+```{r}
+
+
+```
+
+
 
 
 ```{r}
@@ -651,6 +703,34 @@ dbGetQuery(pokemonDatabase,
 dbDisconnect(pokemonDatabase)
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
