@@ -636,64 +636,89 @@ is this change significant?
 #### Goal 2:
 Pokedex app? image, stats, and reads pokedex entry?
 check normality for stats by type
+
+
 hypothesis: flying types are significantly faster than ground, check?
-```{r}
-dbListFields(pokemonDatabase, "pokemon_species_flavor_text")
-
-dbGetQuery(pokemonDatabase, "
-           SELECT *
-           FROM pokemon_species_flavor_text
-           LIMIT 100")
-```
-
-```{r}
-
-dbListFields(pokemonDatabase, "pokemon_stats")
-
-dbGetQuery(pokemonDatabase, "
-           SELECT *
-           FROM  pokemon_stats
-           LIMIT 20")
-
-dbGetQuery(pokemonDatabase, 
-           "PRAGMA FOREIGN_KEY_LIST(pokemon_stats)")
-```
 
 
-```{r}
 
-
-dbListFields(pokemonDatabase, "pokemon_species_names")
-
-dbGetQuery(pokemonDatabase, "
-           SELECT *
-           FROM  pokemon_species_names
-           LIMIT 20")
-
-dbGetQuery(pokemonDatabase, 
-           "PRAGMA FOREIGN_KEY_LIST(pokemon_species_names)")
-```
-
-### Research Question 3: How does each individual stat vary across the different types.
+### Research Question 3: How does each individual stat vary across the different types. NOTE: language_id of 9 is English
 When I think of flying type Pokemon, I imagine fast aerial predators, so naturally you would think that their speed stat is significantly higher than that of ground/rock types that are usually large boulders and giants. But do the stats, get it?, actually back this up? **Lets Find Out!**
 \
 
-**For Flying vs Ground: T test to compare samples of the speed stat taken from the flying and ground types.** 
-\
-Make this modular so it can be used for any combination of types and stats.
+
+**Step 1: get a data frame with every flying type and their speed stat and every ground type and their speed stat**
 \
 
-This can then be replicated for each stat for each type. For example you may want to see if the Fire type, chock full of aggressive Pokemon like Houndoom, have a significantly higher attack stat than a gentler pokemon type such as grass.
+Lets build this dataframe step by step.
 \
+**Step 1a: get a dataframe with every Pokemon and its speed stat**
+```{r}
+dbGetQuery(pokemonDatabase, 
+           "PRAGMA FOREIGN_KEY_LIST(pokemon_stats)")
 
-**Step 1**
-\
-Do some querying so we have a useful dataframe to work with.
+dbGetQuery(pokemonDatabase, "
+           SELECT pokemon_id, identifier, base_stat
+           FROM pokemon_stats INNER JOIN stats
+           ON pokemon_stats.stat_id = stats.id
+           WHERE identifier = 'speed'
+           LIMIT 20")
 
+```
+
+
+**Step 1b: dataframe with every pokemon's type**
+```{r}
+# dbGetQuery(pokemonDatabase, "
+#            SELECT *
+#            FROM pokemon_types")
+# 
+# dbGetQuery(pokemonDatabase, "
+#            PRAGMA FOREIGN_KEY_LIST(pokemon_types)")
+# 
+# dbGetQuery(pokemonDatabase, "
+#            SELECT *
+#            FROM types")
+
+dbGetQuery(pokemonDatabase, "
+           SELECT pokemon_id, slot, identifier as TYPE
+           FROM pokemon_types INNER JOIN types
+           ON pokemon_types.type_id = types.id
+          LIMIT 20")
+
+dbGetQuery(pokemonDatabase, "
+           PRAGMA FOREIGN_KEY_LIST(pokemon_types)
+           ")
+```
+
+**Step 1c: Now that we have two dataframes with every pokemon and its speed stat and another with every Pokemon and its type, we need a dataframe that combines these two.**
 ```{r}
 
 
 ```
+
+
+NOTE: Join pokemon_types and types. pokemon_types gives pokemon id and their type id for slot 1 and 2. types gives the type names that correlate with the type id. 
+
+```{r}
+dbGetQuery(pokemonDatabase, "
+           SELECT *
+           FROM pokemon_types")
+dbGetQuery(pokemonDatabase, "PRAGMA FOREIGN_KEY_LIST(pokemon_types)")
+
+
+
+
+dbGetQuery(pokemonDatabase, "
+           SELECT *
+           FROM types")
+dbGetQuery(pokemonDatabase, "PRAGMA FOREIGN_KEY_LIST(types)")
+
+
+```
+
+
+
 
 
 
