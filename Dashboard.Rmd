@@ -679,6 +679,9 @@ dbGetQuery(pokemonDatabase, "
 # dbGetQuery(pokemonDatabase, "
 #            SELECT *
 #            FROM types")
+dbGetQuery(pokemonDatabase, "
+           PRAGMA FOREIGN_KEY_LIST(pokemon_types)
+           ")  
 
 dbGetQuery(pokemonDatabase, "
            SELECT pokemon_id, slot, identifier as TYPE
@@ -686,16 +689,62 @@ dbGetQuery(pokemonDatabase, "
            ON pokemon_types.type_id = types.id
           LIMIT 20")
 
-dbGetQuery(pokemonDatabase, "
-           PRAGMA FOREIGN_KEY_LIST(pokemon_types)
-           ")
+
 ```
 
 **Step 1c: Now that we have two dataframes with every pokemon and its speed stat and another with every Pokemon and its type, we need a dataframe that combines these two.**
-```{r}
+```{r, eval = FALSE, echo = FALSE}
 
+dbGetQuery(pokemonDatabase, "SELECT * FROM pokemon_stats")
+
+dbGetQuery(pokemonDatabase, "SELECT * FROM stats")
+
+dbGetQuery(pokemonDatabase, "PRAGMA FOREIGN_KEY_LIST(pokemon_stats)")
+dbGetQuery(pokemonDatabase, "PRAGMA FOREIGN_KEY_LIST(pokemon)")
+dbGetQuery(pokemonDatabase, "PRAGMA FOREIGN_KEY_LIST(stats)")
+```
+
+```{r}
+# initial query with all required columns
+dbGetQuery(pokemonDatabase, "
+           SELECT pokemon.id, pokemon.identifier, pokemon_types.pokemon_id, pokemon_types.type_id, types.identifier, pokemon_stats.stat_id, pokemon_stats.base_stat, stats.identifier
+           
+           FROM pokemon_types
+
+           INNER JOIN pokemon ON pokemon_types.pokemon_id = pokemon.id
+           INNER JOIN types ON pokemon_types.type_id = types.id
+           INNER JOIN pokemon_stats ON pokemon_stats.pokemon_id = pokemon.id
+           INNER JOIN stats ON pokemon_stats.stat_id = stats.id
+           LIMIT 20
+           ")
 
 ```
+
+```{r}
+
+# cleaned up query with all required info for flying and ground type pokemon
+dbGetQuery(pokemonDatabase, "
+           SELECT pokemon.identifier AS name, types.identifier AS type, pokemon_stats.base_stat, stats.identifier AS stat_name
+           
+           FROM pokemon_types
+
+           INNER JOIN pokemon ON pokemon_types.pokemon_id = pokemon.id
+           INNER JOIN types ON pokemon_types.type_id = types.id
+           INNER JOIN pokemon_stats ON pokemon_stats.pokemon_id = pokemon.id
+           INNER JOIN stats ON pokemon_stats.stat_id = stats.id
+            
+           WHERE stat_name LIKE 'speed' AND (type LIKE 'flying' OR type LIKE 'ground')
+           
+           ")
+
+```
+
+
+
+
+
+
+
 
 
 NOTE: Join pokemon_types and types. pokemon_types gives pokemon id and their type id for slot 1 and 2. types gives the type names that correlate with the type id. 
