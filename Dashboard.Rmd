@@ -720,11 +720,13 @@ dbGetQuery(pokemonDatabase, "
 
 ```
 
+
+Save the dataframe so that we can do statistics on it with R
 ```{r}
 
 # cleaned up query with all required info for flying and ground type pokemon
-dbGetQuery(pokemonDatabase, "
-           SELECT pokemon.identifier AS name, types.identifier AS type, pokemon_stats.base_stat, stats.identifier AS stat_name
+flynGrndSPD_df = dbGetQuery(pokemonDatabase, "
+           SELECT pokemon.identifier AS name, types.identifier AS type, stats.identifier AS stat_name, pokemon_stats.base_stat
            
            FROM pokemon_types
 
@@ -737,40 +739,97 @@ dbGetQuery(pokemonDatabase, "
            
            ")
 
+# data frame with flying types and their speed stats
+flyingSpeeds = flynGrndSPD_df[which(flynGrndSPD_df$type == "flying"), ]
+
+# data frame with ground types and their speed stats
+groundSpeeds = flynGrndSPD_df[which(flynGrndSPD_df$type == "ground"), ]
+
+flynGrndSPD_df
 ```
 
 
-
-
-
-
-
-
-
-NOTE: Join pokemon_types and types. pokemon_types gives pokemon id and their type id for slot 1 and 2. types gives the type names that correlate with the type id. 
+In order to figure out what hypothesis test to choose, lets figure out if our data follows a normal distribution.
+```{r}
+hist(flyingSpeeds$base_stat, main = "Flying Type Speed Distribution", xlab = "Speed stat")
+```
 
 ```{r}
-dbGetQuery(pokemonDatabase, "
-           SELECT *
-           FROM pokemon_types")
-dbGetQuery(pokemonDatabase, "PRAGMA FOREIGN_KEY_LIST(pokemon_types)")
+hist(groundSpeeds$base_stat, main = "Ground Type Speed Distribution", xlab = "Speed stat")
+```
+
+```{r}
+qqnorm(flyingSpeeds$base_stat, main  = "Normal Q-Q Plot for Flying Types")
+qqline(flyingSpeeds$base_stat, col = "red")
+
+```
+
+```{r}
+qqnorm(groundSpeeds$base_stat, main  = "Normal Q-Q Plot for Ground Types")
+qqline(groundSpeeds$base_stat, col = "red")
+```
 
 
+While the data doesnt appear to be normal, it helps to do a formal test to make sure that we are making an accurate interpretation of our data that isnt solely reliant on visuals.
+\
+In order to do that, we'll conduct a **Shapiro Wilk Test** on a random sample from both groups.
+\
 
+First we need to take random samples from both groups with sample size n = 30.
+```{r}
+flySpeedSample = sample(groundSpeeds$base_stat, 30, replace = TRUE)
+grndSpeedSample = sample(flyingSpeeds$base_stat, 30, replace = TRUE)
+```
 
-dbGetQuery(pokemonDatabase, "
-           SELECT *
-           FROM types")
-dbGetQuery(pokemonDatabase, "PRAGMA FOREIGN_KEY_LIST(types)")
+Then we can use R's built in function for the Shapiro test for normality.
 
+```{r}
+shapiro.test(flySpeedSample)
+shapiro.test(grndSpeedSample)
+```
+Lets interpret these results: For info, the Shapiro Wilk test is a hypothesis test where the null hypothesis is that a random sample comes from a normally distributed dataset.
+\
+\
+The W statistic is the result of the Shapiro Wilk Test, which measures how  close the sample matches a normal distribution, with 1 being normal and 0 being not normal. The P value determines if we can reject the null hypothesis that the sample comes from a normally distributed dataset. If the p value result is <= 0.05, we can reject the null hypothesis, however if the p value result is > 0.05 we are unable to reject the null hypothesis that the random sample comes from a normally distributed dataset.
+\
+\
+However, we encounter a problem. Depending on the random sample, the samples either fail or pass the test. We want to see if it is passing this test a reliable number of times. So lets build a function that does the shapiro wilk test on the 100 different samples, and if 95% of them are passing, we can reasonable say that they pass the shapiro wilk test.
+
+```{r}
+shapiroSample = function(dataset, reps, sampleSize){
+  
+
+  pass_vec = c()
+  for(i in 1:reps){
+    sample = sample(dataset, sampleSize, replace = TRUE)
+    outcome = shapiro.test(sample)
+    
+    # checks to see if this sample rejects the null hypothesis or not
+    # if it does adds a 0 for fail, and if not adds a 1 for pass
+    
+    if(outcome[2] > 0.05){pass_vec[i] = 1}
+    else if(outcome[2] <= 0.05){pass_vec[i] = 0}
+    
+  }
+  
+  return(pass_vec)
+}
 
 ```
 
 
+Now lets execute this function for our data.
+```{r}
+mean(shapiroSample(flyingSpeeds$base_stat, 100, 30))
 
-
-
-
+mean(shapiroSample(groundSpeeds$base_stat, 100, 30))
+```
+Since the percentage of samples out of 100 that pass the Shapiro Wilk test are nowhere close to 95%, or even 90%, for both flying and ground types, we can say that our data is not normally distributed.
+\
+\
+**So what do we do now?**
+\
+We need to find an appropriate statistical test that will give us the findings we are looking for without normality of the data being a requirement.
 
 ```{r}
 
