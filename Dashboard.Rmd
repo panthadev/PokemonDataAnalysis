@@ -57,11 +57,14 @@ length(table(Pokemon$Type.2))
 As you can see there is an extra type in `table(Pokemon$Type.2)` that is "" with the number 386 to represent all of the observations/Pokemon with "" for Type.2.
 
 <br>
-This is the combined table of Type.1 and Type.2, minus the empty "" type Now we need to be careful, because this does not represent every Pokemon. As you can see when we look at the sum of the table, it shows 1214 when we only have 800 observations/Pokemon.
+This is the combined table of Type.1 and Type.2, minus the empty "" type. Now we need to be careful, because this does not represent every Pokemon. As you can see when we look at the sum of the table, it shows 1214 when we only have 800 observations/Pokemon.
 ```{r}
 combinedTypeTable = (table(Pokemon$Type.1) + table(Pokemon$Type.2)[-1])
 
+combinedTypeTable
+```
 
+```{r}
 paste("The sum is: ", sum(combinedTypeTable))
 ```
 
@@ -618,31 +621,12 @@ dbExecute(pokemonDatabase, "PRAGMA foreign_keys = on")
 ```
 
 
-```{r}
+```{r, eval = FALSE}
 dbListTables(pokemonDatabase)
 
 ```
-This database and tables needs to be "cleaned" or organized into the information that I actually need --> practice organizing and putting data togehter with joins
-\
-Questions to ask/analyze:
-\
-how has the stats fro certain types changed over the course of the generartions?
-\
-is this change significant?
-\
 
-#### Goal 1: Create a table/df with all relevant info like pokemon speciest, pokedex number, stats, moves, pokedex flavor text, habitat, strengths and weaknesses, enocunters, locations, abilities
-
-#### Goal 2:
-Pokedex app? image, stats, and reads pokedex entry?
-check normality for stats by type
-
-
-hypothesis: flying types are significantly faster than ground, check?
-
-
-
-### Research Question 3: How does each individual stat vary across the different types. NOTE: language_id of 9 is English
+### Research Question 3: How does each individual stat vary across the different types. 
 When I think of flying type Pokemon, I imagine fast aerial predators, so naturally you would think that their speed stat is significantly higher than that of ground/rock types that are usually large boulders and giants. But do the stats, get it?, actually back this up? **Lets Find Out!**
 \
 
@@ -702,6 +686,8 @@ dbGetQuery(pokemonDatabase, "SELECT * FROM stats")
 dbGetQuery(pokemonDatabase, "PRAGMA FOREIGN_KEY_LIST(pokemon_stats)")
 dbGetQuery(pokemonDatabase, "PRAGMA FOREIGN_KEY_LIST(pokemon)")
 dbGetQuery(pokemonDatabase, "PRAGMA FOREIGN_KEY_LIST(stats)")
+
+
 ```
 
 ```{r}
@@ -721,7 +707,7 @@ dbGetQuery(pokemonDatabase, "
 ```
 
 
-Save the dataframe so that we can do statistics on it with R
+**Step 1d: Save the dataframe so that we can do statistics on it with R**
 ```{r}
 
 # cleaned up query with all required info for flying and ground type pokemon
@@ -745,17 +731,20 @@ flyingSpeeds = flynGrndSPD_df[which(flynGrndSPD_df$type == "flying"), ]
 # data frame with ground types and their speed stats
 groundSpeeds = flynGrndSPD_df[which(flynGrndSPD_df$type == "ground"), ]
 
-flynGrndSPD_df
+# first 10 entries
+flynGrndSPD_df[1:10,]
 ```
 
 
+**Step 2: Determine normality**
+\
 In order to figure out what hypothesis test to choose, lets figure out if our data follows a normal distribution.
 ```{r}
-hist(flyingSpeeds$base_stat, main = "Flying Type Speed Distribution", xlab = "Speed stat")
+hist(flyingSpeeds$base_stat, main = "Flying Type Speed Distribution", xlab = "Speed stat", breaks=20)
 ```
 
 ```{r}
-hist(groundSpeeds$base_stat, main = "Ground Type Speed Distribution", xlab = "Speed stat")
+hist(groundSpeeds$base_stat, main = "Ground Type Speed Distribution", xlab = "Speed stat", breaks = 20)
 ```
 
 ```{r}
@@ -770,15 +759,17 @@ qqline(groundSpeeds$base_stat, col = "red")
 ```
 
 
-While the data doesnt appear to be normal, it helps to do a formal test to make sure that we are making an accurate interpretation of our data that isnt solely reliant on visuals.
+While the data doesnt appear to be normal, it helps to do a formal test to make sure that we are making an accurate interpretation of our data that isn't solely reliant on visuals.
 \
 In order to do that, we'll conduct a **Shapiro Wilk Test** on a random sample from both groups.
 \
-
+**Step 2b: conduct Shapiro Wilk Test**
+\
 First we need to take random samples from both groups with sample size n = 30.
 ```{r}
-flySpeedSample = sample(groundSpeeds$base_stat, 30, replace = TRUE)
-grndSpeedSample = sample(flyingSpeeds$base_stat, 30, replace = TRUE)
+set.seed(923238)
+flySpeedSample = sample(flyingSpeeds$base_stat, 30, replace = TRUE)
+grndSpeedSample = sample(groundSpeeds$base_stat, 30, replace = TRUE)
 ```
 
 Then we can use R's built in function for the Shapiro test for normality.
@@ -793,7 +784,7 @@ Lets interpret these results: For info, the Shapiro Wilk test is a hypothesis te
 The W statistic is the result of the Shapiro Wilk Test, which measures how  close the sample matches a normal distribution, with 1 being normal and 0 being not normal. The P value determines if we can reject the null hypothesis that the sample comes from a normally distributed dataset. If the p value result is <= 0.05, we can reject the null hypothesis, however if the p value result is > 0.05 we are unable to reject the null hypothesis that the random sample comes from a normally distributed dataset.
 \
 \
-However, we encounter a problem. Depending on the random sample, the samples either fail or pass the test. We want to see if it is passing this test a reliable number of times. So lets build a function that does the shapiro wilk test on the 100 different samples, and if 95% of them are passing, we can reasonable say that they pass the shapiro wilk test.
+However, we encounter a problem. Depending on the random sample, the samples either fail or pass the test. We want to see if it is passing this test a reliable number of times. So lets build a function that does the shapiro wilk test on the 100 different samples, and lets have a p value of 0.05, ie if less that 95% of the samples fail the test, then we can reject the null hypothesis that the samples come from a normally distributed population.
 
 ```{r}
 shapiroSample = function(dataset, reps, sampleSize){
@@ -820,16 +811,132 @@ shapiroSample = function(dataset, reps, sampleSize){
 
 Now lets execute this function for our data.
 ```{r}
+set.seed(2354)
 mean(shapiroSample(flyingSpeeds$base_stat, 100, 30))
 
 mean(shapiroSample(groundSpeeds$base_stat, 100, 30))
 ```
-Since the percentage of samples out of 100 that pass the Shapiro Wilk test are nowhere close to 95%, or even 90%, for both flying and ground types, we can say that our data is not normally distributed.
+Since the percentage of samples out of 100 that pass the Shapiro Wilk test are nowhere close to 95% for both flying and ground types, we can say that our data is not normally distributed.
 \
 \
 **So what do we do now?**
 \
 We need to find an appropriate statistical test that will give us the findings we are looking for without normality of the data being a requirement.
+\
+We will use the **MANN-WHITNEY U TEST** which will allow us to see if our sample of flying and groundtype pokemons' sppes come from significantly different populations, ie if the populations have a significant difference in their distribution.
+
+**Step 3: Conduct Mann-Whitney U Test**
+\
+First step of the test is to rank the speed stats of both samples
+```{r, echo = FALSE}
+flySpeedSample
+grndSpeedSample
+
+
+MWtestSamplesDf = data.frame(rep(c("flying", "ground"), each = length(flySpeedSample)), c(flySpeedSample, grndSpeedSample) )
+names(MWtestSamplesDf) = c("type", "speed_stat")
+
+MWtestSamplesDf[order("speed_stat"), ]
+
+```
+
+Then separate the flying and ground types to get their rank sums.
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+#### Research Question 4: are pokemon with certain abilities statistically weaker than pokemon with certain other abilities, ie are abilites statistically related to base stats in some way, and if so what does this tell us?
+
+### NOTE: USE VIEWS IF THERE IS A QUERY YOU NEED TO KEEP MAKING
+What insight do we gain from the existence/nonexistence of a relationship between base stats and abilities?
+\
+
+Step 1: Lets query to get a dataframe with Pokemon, their name, their abilities, and their base stat totals.
+
+
+```{r}
+# querying the relations that have the fields for the final data frame
+
+dbGetQuery(pokemonDatabase, "PRAGMA FOREIGN_KEY_LIST(pokemon_abilities)")
+
+dbGetQuery(pokemonDatabase, "
+           SELECT *
+           FROM pokemon_abilities
+           ")
+
+dbGetQuery(pokemonDatabase, "
+           SELECT *
+           FROM abilities")
+
+
+dbGetQuery(pokemonDatabase, "
+           SELECT *
+           FROM pokemon_stats")
+dbGetQuery(pokemonDatabase, "PRAGMA FOREIGN_KEY_LIST(pokemon_stats)")
+
+
+# getting the total base stat of each pokemon
+dbGetQuery(pokemonDatabase, "
+           SELECT pokemon_id, SUM(base_stat)
+           FROM pokemon_stats
+           GROUP BY pokemon_id
+           ")
+
+
+```
+
+
+
+```{r}
+
+dbGetQuery(pokemonDatabase, "
+           SELECT pokemon_abilities.pokemon_id, pokemon.identifier, pokemon_abilities.ability_id, abilities.identifier, SUM(pokemon_stats.base_stat)
+           FROM pokemon_abilities
+           
+           INNER JOIN abilities ON pokemon_abilities.ability_id = abilities.id
+           INNER JOIN pokemon ON pokemon_abilities.pokemon_id = pokemon.id
+           INNER JOIN pokemon_stats ON pokemon.id = pokemon_stats.pokemon_id
+           
+           GROUP BY pokemon_abilities.pokemon_id, abilities.identifier
+           ")
+
+
+
+```
+
+Now that we have all of the pokemon, their abilities, and base stats, lets see how many abilities and how many of each one there are.
+
+```{r}
+ability_nums = dbGetQuery(pokemonDatabase, "
+           SELECT DISTINCT ability_id 
+           FROM pokemon_abilities")
+dim(ability_nums)[1]
+
+dbGetQuery(pokemonDatabase, "
+           SELECT ability_id, COUNT(ability_id)
+           FROM pokemon_abilities
+           GROUP BY ability_id
+           ")
+```
+
+
+
+#### Research Question X: 
+Based on historical data, can we build a predictive model that estimates a Pokémon’s base stats based on its type, weight, height, and generation
+```{r}
+dbListTables(pokemonDatabase)
+```
+
+
+
 
 ```{r}
 
