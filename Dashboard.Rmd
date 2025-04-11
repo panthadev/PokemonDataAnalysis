@@ -823,9 +823,7 @@ Since the percentage of samples out of 100 that pass the Shapiro Wilk test are n
 \
 We need to find an appropriate statistical test that will give us the findings we are looking for without normality of the data being a requirement.
 \
-We will use the **MANN-WHITNEY U TEST** which will allow us to see if our sample of flying and groundtype pokemons' speeds come from significantly different populations, ie if the populations have a significant difference in their distribution.
-\
-The Mann-Whitney U test does this by _______________.
+We will use the **MANN-WHITNEY U TEST** which will allow us to see if our sample of flying and ground type Pokemons' speeds come from significantly different populations, ie if the populations have a significant difference in their distribution.
 \
 **Step 3: Conduct Mann-Whitney U Test**
 \
@@ -853,7 +851,7 @@ ground_speed_ranks = fly_grnd_speed_ranked[which(fly_grnd_speed_ranked$type == "
 
 flying_speed_ranks = fly_grnd_speed_ranked[which(fly_grnd_speed_ranked$type == "flying"), ]
 ```
-**Step 3c: calculate the rank sums for both types and determine th U statistic**
+**Step 3c: calculate the rank sums for both types **
 
 ```{r}
 ground_speed_ranksum = sum(ground_speed_ranks$rank)
@@ -862,11 +860,45 @@ ground_speed_ranksum
 flying_speed_ranksum
 ```
 
+
+**Step 3d: Determine the U statistic and the P value**
+
+The U statistic tells you how often values from one of the samples rank below the other. U1 is the number of times values from the first sample rank above values from the second one. U2 is vice versa. The U statistic is min(U1, U2). However this is for small sample sizes. 
+\
+When sample sizes n > 20, U statistic still shows how much overlap there is between the two sample ranks. However as the sample size becomes sufficiently large, the distribution of U, ie all of the possible values that U could be, becomes approximately normal.
+\
+This means two things: that the U table is no longer helpul as there are too many possible values that U can be, and that we have to calculate the z-score.
+\
+The z-score tells you how many standard deviations your calculated U statistic is from the mean U statistic.
+\
+Then we can use pnorm(z-score) to get the p value which tells you how likely, given the null hypothesis is true, that you get that specific z-score. 
 ```{r}
+n1 = dim(ground_speed_ranks)[1]
+n2 = dim(flying_speed_ranks)[1]
 
+U1 = ( (n1 * n2) + ((n1 * (n1+1)) / 2) ) - ground_speed_ranksum
+U2 = ( (n1 * n2) + ((n1 * (n1+1)) / 2) ) - flying_speed_ranksum
 
+U1
+U2
+
+Ustatistic = min(U1, U2)
+muU = (n1 * n2) / 2
+sigmaU = sqrt(((n1 * n2) * (n1 + n2 + 1)) / 12)
+  
+zscore = (Ustatistic - muU) / sigmaU
+
+zscore
+
+# gives the p value
+pnorm(zscore)
 ```
-
+Since our p value is extremely small, much much smaller than our chosen significance value of 0.05, we can confidently reject the null hypothesis that there is no significant difference between the speed stats of flying and ground type Pokemon. 
+\
+And since our z-score was negative we can colclude the direction, ie that the first group(ground types) had lower ranks.
+\
+##### Colclusion:
+Putting all of this information together, we can conclude that Flying type and Ground type Pokemon have significantly different speed stats and furthermore, Flying types do indeed have significantly higher speed stats than Groudn types.
 
 
 
