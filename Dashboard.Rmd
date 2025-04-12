@@ -1,6 +1,6 @@
 ---
 title: "Dashboard"
-output: rmarkdown::github_document
+output: github_document
 always_allow_html: true
 date: "2025-01-25"
 ---
