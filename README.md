@@ -30,8 +30,8 @@ Aspiring Data Analyst | Skilled in R, SQL, Data Viz, & Statistical Analysis
 
 ##  Key Insights
 
-- **Flying** type Pokémon have statistically higher speed  stats than **Ground** type Pokémon(*p* < 0.01).
-- **Water** type Pokémon are the most common Pokémon throughout Generations 1-6
+- Flying type Pokémon have statistically higher speed  stats than Ground type Pokémon(*p* < 0.01).
+- Water type Pokémon are the most common Pokémon throughout Generations 1-6
 - Visualized frequency of each Pokémon type across 6 Generations
 
 
