@@ -25,7 +25,7 @@ Aspiring Data Analyst | Skilled in R, SQL, Data Viz, & Statistical Analysis
 
 - **Interactive Visualizations**: Graphs built with Plotly.
 - **Statistical Testing**: Hypothesis testing (Shapiro-Wilk test, Mann-Whitney U test).
-- **Data Cleaning**: Handling missing values, categorical encoding, and grouping.
+- **Data Cleaning**: Handling missing values
 - **SQL Integration**: Querying Pokémon data stored in a local SQLite database.
 
 ##  Key Insights
