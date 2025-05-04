@@ -1,17 +1,14 @@
 ---
-title: "Dashboard"
-output: github_document
-always_allow_html: true
-date: "2025-01-25"
+title: "Pokemon Data Analysis"
+output: html_document
 ---
 
 
-## Welcome to the World of Pokemon
+
 ```{r}
 library(datasets)
 ```
 
-First lets bring in the Pokemon dataset.
 
 ```{r}
 
@@ -99,7 +96,7 @@ barplot(combinedTypeTable[1:5], main = "TOP 5 MOST COMMON TYPES IN POKEMON", yla
 
 
 
-### Reasearch Question 2: *ADD A "Total" Option to the Final Graph that Shows Total Amount of that Type
+### Reasearch Question 2: 
 
 **What generation has the greatest number of each "type"(Type.1 and Type.2 combined) of Pokemon**
 
@@ -172,7 +169,7 @@ combineTypeTblByGen = function(generation){
 }
 
 
-barplot(combineTypeTblByGen(1), las=2, main="Frequency of Types for Generation 1")
+barplot(combineTypeTblByGen(1), las=2, main="Frequency of Types for Generation 1", col=c("lightblue"))
 
 
 ```
@@ -843,7 +840,7 @@ fly_grnd_speed_ranked = fly_grnd_speed_ranked[order(fly_grnd_speed_ranked$speed_
 
 # adds a column with the ranks 
 fly_grnd_speed_ranked$rank = 1:dim(fly_grnd_speed_ranked)[1]
-fly_grnd_speed_ranked
+fly_grnd_speed_ranked[c(1:20), ]
 ```
 
 **Step 3b: Separate the flying and ground types to get their rank sums**
@@ -907,90 +904,88 @@ And since our z-score was negative we can colclude the direction, ie that the fi
 Putting all of this information together, we can conclude that Flying type and Ground type Pokemon have significantly different speed stats and furthermore, Flying types do indeed have significantly higher speed stats than Groudn types.
 
 
+<!-- #### Research Question 4: are pokemon with certain abilities statistically weaker than pokemon with certain other abilities, ie are abilites statistically related to base stats in some way, and if so what does this tell us? -->
+
+<!-- ### NOTE: USE VIEWS IF THERE IS A QUERY YOU NEED TO KEEP MAKING -->
+<!-- What insight do we gain from the existence/nonexistence of a relationship between base stats and abilities? -->
+<!-- \ -->
+
+<!-- Step 1: Lets query to get a dataframe with Pokemon, their name, their abilities, and their base stat totals. -->
+
+
+<!-- ```{r, eval = FALSE} -->
+<!-- # querying the relations that have the fields for the final data frame -->
+
+<!-- dbGetQuery(pokemonDatabase, "PRAGMA FOREIGN_KEY_LIST(pokemon_abilities)") -->
+
+<!-- dbGetQuery(pokemonDatabase, " -->
+<!--            SELECT * -->
+<!--            FROM pokemon_abilities -->
+<!--            ") -->
+
+<!-- dbGetQuery(pokemonDatabase, " -->
+<!--            SELECT * -->
+<!--            FROM abilities") -->
+
+
+<!-- dbGetQuery(pokemonDatabase, " -->
+<!--            SELECT * -->
+<!--            FROM pokemon_stats") -->
+<!-- dbGetQuery(pokemonDatabase, "PRAGMA FOREIGN_KEY_LIST(pokemon_stats)") -->
+
+
+<!-- # getting the total base stat of each pokemon -->
+<!-- dbGetQuery(pokemonDatabase, " -->
+<!--            SELECT pokemon_id, SUM(base_stat) -->
+<!--            FROM pokemon_stats -->
+<!--            GROUP BY pokemon_id -->
+<!--            ") -->
+
+
+<!-- ``` -->
 
 
 
-#### Research Question 4: are pokemon with certain abilities statistically weaker than pokemon with certain other abilities, ie are abilites statistically related to base stats in some way, and if so what does this tell us?
+<!-- ```{r} -->
 
-### NOTE: USE VIEWS IF THERE IS A QUERY YOU NEED TO KEEP MAKING
-What insight do we gain from the existence/nonexistence of a relationship between base stats and abilities?
-\
+<!-- dbGetQuery(pokemonDatabase, " -->
+<!--            SELECT pokemon_abilities.pokemon_id, pokemon.identifier, pokemon_abilities.ability_id, abilities.identifier, SUM(pokemon_stats.base_stat) -->
+<!--            FROM pokemon_abilities -->
 
-Step 1: Lets query to get a dataframe with Pokemon, their name, their abilities, and their base stat totals.
+<!--            INNER JOIN abilities ON pokemon_abilities.ability_id = abilities.id -->
+<!--            INNER JOIN pokemon ON pokemon_abilities.pokemon_id = pokemon.id -->
+<!--            INNER JOIN pokemon_stats ON pokemon.id = pokemon_stats.pokemon_id -->
 
-
-```{r, eval = FALSE}
-# querying the relations that have the fields for the final data frame
-
-dbGetQuery(pokemonDatabase, "PRAGMA FOREIGN_KEY_LIST(pokemon_abilities)")
-
-dbGetQuery(pokemonDatabase, "
-           SELECT *
-           FROM pokemon_abilities
-           ")
-
-dbGetQuery(pokemonDatabase, "
-           SELECT *
-           FROM abilities")
-
-
-dbGetQuery(pokemonDatabase, "
-           SELECT *
-           FROM pokemon_stats")
-dbGetQuery(pokemonDatabase, "PRAGMA FOREIGN_KEY_LIST(pokemon_stats)")
-
-
-# getting the total base stat of each pokemon
-dbGetQuery(pokemonDatabase, "
-           SELECT pokemon_id, SUM(base_stat)
-           FROM pokemon_stats
-           GROUP BY pokemon_id
-           ")
-
-
-```
+<!--            GROUP BY pokemon_abilities.pokemon_id, abilities.identifier -->
+<!--            LIMIT 25") -->
 
 
 
-```{r}
+<!-- ``` -->
 
-dbGetQuery(pokemonDatabase, "
-           SELECT pokemon_abilities.pokemon_id, pokemon.identifier, pokemon_abilities.ability_id, abilities.identifier, SUM(pokemon_stats.base_stat)
-           FROM pokemon_abilities
-           
-           INNER JOIN abilities ON pokemon_abilities.ability_id = abilities.id
-           INNER JOIN pokemon ON pokemon_abilities.pokemon_id = pokemon.id
-           INNER JOIN pokemon_stats ON pokemon.id = pokemon_stats.pokemon_id
-           
-           GROUP BY pokemon_abilities.pokemon_id, abilities.identifier
-           LIMIT 25")
+<!-- Now that we have all of the pokemon, their abilities, and base stats, lets see how many abilities and how many of each one there are. -->
 
+<!-- ```{r} -->
+<!-- ability_nums = dbGetQuery(pokemonDatabase, " -->
+<!--            SELECT DISTINCT ability_id  -->
+<!--            FROM pokemon_abilities") -->
+<!-- dim(ability_nums)[1] -->
+<!-- #  -->
+<!-- dbGetQuery(pokemonDatabase, " -->
+<!--            SELECT ability_id, COUNT(ability_id) -->
+<!--            FROM pokemon_abilities -->
+<!--            GROUP BY ability_id -->
+<!--            ") -->
+<!-- ``` -->
+<!-- #### Research Question X: -->
+<!-- Statistical Modeling of Evolution Gains: ie what types benefit the most from evolving -->
+<!-- Question: How much do Pokémon improve on average through each evolution stage? Is there a statistically significant difference in improvement between different types or generations? -->
 
+<!-- #### Research Question X:  -->
+<!-- Based on historical data, can we build a predictive model that estimates a Pokémon’s base stats based on its type, weight, height, and generation -->
+<!-- ```{r} -->
 
-```
-
-Now that we have all of the pokemon, their abilities, and base stats, lets see how many abilities and how many of each one there are.
-
-```{r}
-ability_nums = dbGetQuery(pokemonDatabase, "
-           SELECT DISTINCT ability_id 
-           FROM pokemon_abilities")
-dim(ability_nums)[1]
-# 
-dbGetQuery(pokemonDatabase, "
-           SELECT ability_id, COUNT(ability_id)
-           FROM pokemon_abilities
-           GROUP BY ability_id
-           ")
-```
-
-
-
-#### Research Question X: 
-Based on historical data, can we build a predictive model that estimates a Pokémon’s base stats based on its type, weight, height, and generation
-```{r}
-
-```
+<!-- ``` -->
 
 
 
