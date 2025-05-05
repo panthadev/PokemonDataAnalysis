@@ -13,8 +13,7 @@ output: html_document
 <br>
 
 ### **Overview**
-Analysis of Pokémon Type Trends and inter-Type Speed Comparison
-<br>
+
 This project explores patterns in Pokémon types across the first six generations and examines potential statistical differences in base Speed stats between Flying and Ground types. The analysis was conducted using a csv containing information about each Pokémon's name, type(s), base stats, and generation. The hypothesis testing was conducted using a SQlite database. The project is divided into three key components:
 
 <ol>
