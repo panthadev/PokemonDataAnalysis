@@ -1,6 +1,6 @@
 
 # Pokémon Data Analysis
-
+https://panthadev.github.io/PokemonDashboard/
 
 ## Author
 **Kripal Pantha**  
